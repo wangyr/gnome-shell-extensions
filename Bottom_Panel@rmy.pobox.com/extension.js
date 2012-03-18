@@ -101,6 +101,7 @@ WindowList.prototype = {
     _init: function() {
         this.actor = new St.BoxLayout({ name: 'windowList',
                                         style_class: 'window-list-box' });
+        this.actor.connect('scroll-event', Lang.bind(this, this._onScrollEvent));
         this.actor._delegate = this;
         this._windows = [];
 
@@ -224,6 +225,30 @@ WindowList.prototype = {
             ws._windowRemovedId = ws.connect('window-removed',
                                     Lang.bind(this, this._windowRemoved));
         }
+    },
+
+    _onScrollEvent: function(actor, event) {
+        let active = global.screen.get_active_workspace_index();
+        let direction = event.get_scroll_direction();
+        let idx = 0;
+
+        for (idx=0;idx<this._windows[active].length;++idx) {
+            if (this._windows[active][idx].metaWindow.has_focus())
+                break;
+        }
+
+        if (idx==this._windows[active].length)
+            return;
+
+        if (direction==Clutter.ScrollDirection.DOWN && idx!=this._windows[active].length-1) {
+            idx+=1;
+        } else if (direction==Clutter.ScrollDirection.UP && idx!=0) {
+            idx-=1;
+        }
+
+        this._windows[active][idx].metaWindow.activate(global.get_current_time());
+
+        return true;
     }
 };
 
@@ -472,12 +497,12 @@ WorkspaceSwitcher.prototype = {
         let active = global.screen.get_active_workspace_index();
         let index = global.screen.n_workspaces;
 
-        if ( direction == Clutter.ScrollDirection.DOWN ) {
+        if ( direction == Clutter.ScrollDirection.UP ) {
             if ( active%ncols > 0 ) {
                 index = active-1;
             }
         }
-        if ( direction == Clutter.ScrollDirection.UP ) {
+        if ( direction == Clutter.ScrollDirection.DOWN ) {
             if ( active < global.screen.n_workspaces-1 &&
                          active%ncols != ncols-1 ) {
                 index = active+1;
@@ -614,11 +639,11 @@ BottomPanel.prototype = {
         let windowList = new WindowList();
         this.actor.add(windowList.actor, { expand: true });
 
-        this.workspaceSwitcher = new WorkspaceSwitcher();
-        this.actor.add(this.workspaceSwitcher.actor);
-
         this.messageButton = new MessageButton();
         this.actor.add(this.messageButton.actor);
+
+        this.workspaceSwitcher = new WorkspaceSwitcher();
+        this.actor.add(this.workspaceSwitcher.actor);
 
         Main.layoutManager.addChrome(this.actor, { affectsStruts: true });
 
