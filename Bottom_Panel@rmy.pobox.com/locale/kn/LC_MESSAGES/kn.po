@@ -1,0 +1,13 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+
+msgid "Number of workspaces"
+msgstr "ಕಾರ್ಯಕ್ಷೇತ್ರಗಳ ಸಂಖ್ಯೆ"
+
+msgid "Rows in workspace switcher"
+msgstr "ಕಾರ್ಯಕ್ಷೇತ್ರ ಬದಲಾವಣೆಗಾರನಲ್ಲಿರುವ ಸಾಲುಗಳು"

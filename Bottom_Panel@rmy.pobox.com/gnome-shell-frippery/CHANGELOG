@@ -1,0 +1,123 @@
+20111211 - 0.3.6
+
+Add translations for Applications Menu settings dialog.
+Allow the Applications Menu button label to be turned off.
+Tidy up the Applications Menu extension.
+Make the Applications Menu settings dialog apply changes immediately.
+The Applications Menu extension didn't remember it's settings if both the
+icon and hot corner were turned off.  (Reported by dox.)
+
+20111204 - 0.3.5
+
+Add a dialog (invoked by a right click on the Applications Menu) to control
+the icon in the Applications Menu and the top-left hot corner.
+Hide ripple actors, as otherwise they interfere with drag and drop onto the
+hot corner.  DnD still isn't quite right, though.
+
+20111127 - 0.3.4
+
+Implement a switcher popup that understands the new workspace layout.
+Fix bug in workspace switching using the mouse wheel on the row indicator:
+it always moved to the first column of the new row.
+Fix workspace switching in overview mode when the Bottom Panel is enabled.
+(Reported by Andre Maute.)
+Restore actionMoveWorkpaceLeft/Right when Bottom Panel is disabled.
+
+20111122 - 0.3.3
+
+Fix a bug in the handling of translations when multiple extensions are
+installed.
+The workspace dialog (right click on workspace switcher) has an additional
+field to allow the number of rows to be set.
+The mouse wheel can be used in the workspace switcher to change workspace.
+A row indicator has been added to the workspace switcher.
+Allow workspaces to be arranged in a grid.
+
+20111113 - 0.3.2
+
+Add an icon to the Applications menu button.  You might need to use GNOME
+Tweak Tool to change the icon theme to get your distribution's logo in the
+button.
+Reinstate top-left hot corner as a way of switching to the overview.
+
+20111107 - 0.3.1
+
+Only display text in the message tray button if notification summaries are
+available to view.
+Fix items in bottom panel so that they match the panel's height, thus making
+it easier to activate them.  Patch supplied by Jasper St. Pierre.
+
+20111017 - 0.3.0
+
+Update for GNOME 3.2
+Update all extensions to permit live enabling/disabling.  Thanks to Jasper
+St. Pierre for fixing the Application Menu, Move Clock and Panel Favorites
+extensions.
+Rename the Disable Dynamic Workspaces extension to Static Workspaces.
+The Application Menu extension disables the hot corner at the top left.
+
+20110818 - 0.2.5
+
+Minor changes to improve the positioning of the bottom panel on systems with
+more than one monitor.
+
+20110807 - 0.2.4
+
+Fix a bug that stopped Alt+Tab working after using Ctrl+Alt+Left/Right to
+switch workspaces.  (Reported by Manuel Koller.)
+
+20110617 - 0.2.3
+
+Another attempt to fix the window list bug.  This one actually seems to
+work.  Again thanks to Chris Hooper for helping debug this.
+
+20110613 - 0.2.2
+
+Attempt to fix a bug in the way the window list handles adding/removing
+applications.  I haven't been able to reproduce the problem myself so I've
+relied on the reporter, Chris Hooper, to test this.  Thanks, Chris!
+
+20110608 - 0.2.1
+
+Make the width of the clock more stable as the time changes.
+Fix some JavaScript warnings in the bottom panel extension.
+
+20110602 - 0.2.0 "Jumping the shark"
+
+Add Bottom Panel extension.
+Add copyright headers to all JavaScript files.
+
+20110531 - 0.1.1
+
+Fix display of launcher tooltips when the application doesn't have a 
+description. (Reported by padfoot at Arch Linux.)
+Work around flaw in loading of themes that caused certain extensions to
+lose their stylesheets when the user-theme extension was installed.
+(See GNOME Bugzilla #650971)
+
+20110525 - 0.1.0
+
+Use gnome-shell rather than gnome-panel-3.0 for translation of 'Applications'.
+Add Shut Down menu extension.
+
+20110517 - 0.0.4
+
+Really move code to disable dynamic workspaces out of the 'move clock'
+extension.  (Reported by Grzegorz Jeszka.)
+Add description to panel launcher tooltips.
+Ensure panel border corner style matches that of the Applications button.
+
+20110515 - 0.0.3
+
+Add URL of website to metadata of each extension.
+Add tooltips to panel launchers.
+If there's only one workspace set the number of workspaces to four.
+
+20110507 - 0.0.2
+
+Initial public release.
+Move code to disable dynamic workspaces into a new extension.
+
+20110507 - 0.0.1
+
+Initial package

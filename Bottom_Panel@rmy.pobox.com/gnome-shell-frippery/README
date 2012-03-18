@@ -1,0 +1,89 @@
+GNOME Shell Frippery
+====================
+
+The shell in GNOME 3 can be modified by writing extensions in JavaScript.
+Here are some extensions I've written to provide a user experience more
+akin to that of GNOME 2.
+
+Move the clock
+
+  Move the clock from the centre of the panel towards the right. This
+  isn't a very significant change, but it was the first extension I wrote.
+
+Favourites in panel
+
+  Place a launcher for each favourite application in the panel.  It isn't
+  possible to manage the list from the panel: instead you can add, remove
+  or move favourite applications in the dash and the panel display will
+  update to match.
+
+Applications menu in panel
+
+  Replace the Activities button in the panel with an Applications menu.
+  The menu is implemented using facilities supplied by the shell so it
+  doesn't behave exactly like a normal menu.  You might need to use GNOME
+  Tweak Tool to change the icon theme to get your distribution's logo in
+  the button.
+
+  Right clicking on the Applications menu invokes a dialog to let you
+  turn off the icon or the top-left hot corner.
+
+Static workspaces
+
+  The GNOME 3 shell attempts to maintain just one empty workspace.
+  New workspaces are created on demand and when the last application
+  in a workspace is closed that workspace is removed.  This extension
+  prevents the shell from changing the number of workspaces.
+
+Shut Down menu
+
+  Replace the Suspend item in the status menu with Shut Down.  The dialog
+  that this invokes includes all available shutdown options: suspend,
+  hibernate, restart and power off.
+
+Bottom panel
+
+  Add a bottom panel, including a window list, workspace switcher and message
+  tray button.
+
+  Workspaces are arranged in a horizontal row, so the keybindings to change
+  workspace have been altered to ctrl-alt-left/right.  Workspaces can also
+  be arranged in multiple rows.  In this case ctrl-alt-up/down switch between
+  rows and a row indicator appears to the left of the workspace switcher.
+  Clicking on the row indicator changes row.  The mouse scroll wheel can be
+  used in the row indicator or workspace switcher to change workspace.
+
+  The number of workspaces and the number of rows can be set using a dialog
+  obtained by right clicking on the workspace switcher.
+
+  The message tray button shows and hides the message tray, as the hot corner
+  is hidden by the panel.  If no messages are available the button is blank.
+
+The latest version of the extensions can be found here:
+
+  http://intgat.tigress.co.uk/rmy/extensions/index.html
+
+They are distributed under the terms of the GNU General Public License,
+version 2 or later.  See the COPYING file for details.
+
+The Frippery extensions are intended to be used together to provide a
+GNOME 2-like experience. However, if you'd like to control which are
+enabled the best option is GNOME Tweak Tool (gnome-tweak-tool in the
+Fedora repositories). Alternatively you can use the brute-force method
+and just delete any you don't want. After installation you'll need to
+restart the shell to make the extensions take effect: enter 'r' in the
+Alt+F2 dialog or log out and in again.  Once the extensions are known to
+the Shell you can use GNOME Tweak Tool to enable and disable individual
+extensions without needing to restart.
+
+The extensions hook into the very core of the GNOME shell. It's almost
+inevitable that future changes to the shell will break them (though I'll
+make every effort to unbreak them).
+
+During development and testing I have only the Frippery extensions
+installed. There will be conflicts between extensions and it's impossible
+to test all combinations. I do try to resolve conflicts that are brought
+to my attention but all I can guarantee is that the Frippery extensions
+are compatible with one another.
+
+Ron Yorston <rmy@tigress.co.uk>
