@@ -11,6 +11,7 @@ const Pango = imports.gi.Pango;
 const Shell = imports.gi.Shell;
 const Signals = imports.signals;
 const St = imports.gi.St;
+const DND = imports.ui.dnd;
 
 const Main = imports.ui.main;
 const MessageTray = imports.ui.messageTray;
@@ -47,8 +48,13 @@ WindowListItem.prototype = {
                                   reactive: true,
                                   can_focus: true });
 
+        this.actor._delegate = this;
         this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
         this.actor.connect('button-press-event', Lang.bind(this, this._onButtonPress));
+        this._draggable = DND.makeDraggable(this.actor);
+        this._draggable.connect('drag-begin', Lang.bind(this, this._onDragBegin));
+        this._draggable.connect('drag-end', Lang.bind(this, this._onDragEnd));
+        this.inDrag = false;
     },
 
      _onTitleChanged: function(w) {
@@ -64,12 +70,16 @@ WindowListItem.prototype = {
         this.metaWindow.disconnect(this._notifyTitleId);
     },
 
-    _onButtonPress: function() {
-        if ( this.metaWindow.has_focus() ) {
-            this.metaWindow.minimize(global.get_current_time());
-        }
-        else {
-            this.metaWindow.activate(global.get_current_time());
+    _onButtonPress: function(actor, event) {
+        let button = event.get_button();
+
+        if (button == 1) {
+            if ( this.metaWindow.has_focus() ) {
+                this.metaWindow.minimize(global.get_current_time());
+            }
+            else {
+                this.metaWindow.activate(global.get_current_time());
+            }
         }
     },
 
@@ -90,6 +100,37 @@ WindowListItem.prototype = {
         else {
             this._itemBox.remove_style_pseudo_class('focused');
         }
+    },
+
+    getDragActor: function(x, y) {
+        return this.actor;
+    },
+
+    getDragActorSource: function() {
+        return this.actor;
+    },
+
+    _onDragBegin: function(time) {
+        this.inDrag = true;
+        this.emit('drag-begin', time);
+    },
+
+    _onDragEnd: function(time, snapback) {
+        this.inDrag = false;
+        this.emit('drag-end', time);
+    }
+};
+Signals.addSignalMethods(WindowListItem.prototype);
+
+ // stolen from dash.js
+function DragPlaceholderItem() {
+    this._init();
+}
+
+DragPlaceholderItem.prototype = {
+    _init: function() {
+        this.actor = new St.Bin({ style_class: 'dash-placeholder' });
+        this.actor._delegate = this;
     }
 };
 
@@ -120,67 +161,90 @@ WindowList.prototype = {
         global.screen.connect('notify::n-workspaces',
                                 Lang.bind(this, this._changeWorkspaces));
 
-        this._refreshItems();
+        this._dragMonitor = { dragMotion: Lang.bind(this, this._onDragMotion) };
+        this._placeHolder = null;
+        this._dragPos = -1;
+        this._dragTargetPos = -1;
     },
 
     _onFocus: function() {
-        for ( let i = 0; i < this._windows.length; ++i ) {
-            this._windows[i].doFocus();
+        let active = global.screen.get_active_workspace_index();
+        for ( let i = 0; i < this._windows[active].length; ++i ) {
+            this._windows[active][i].doFocus();
         }
     },
 
     _refreshItems: function() {
-        this.actor.destroy_children();
-        this._windows = [];
+//        this.actor.destroy_children();
+        let active = global.screen.get_active_workspace_index();
+        let children = this.actor.get_children();
 
-        let metaWorkspace = global.screen.get_active_workspace();
-        let windows = metaWorkspace.list_windows();
-        windows.sort(function(w1, w2) {
-            return w1.get_stable_sequence() - w2.get_stable_sequence();
-        });
+        for (let i = children.length - 1;i >= 0;--i) {
+            this.actor.remove_actor(children[i]);
+        }
+
+        this._refreshWorkspace(active);
 
         // Create list items for each window
-        let tracker = Shell.WindowTracker.get_default();
-        for ( let i = 0; i < windows.length; ++i ) {
-            let metaWindow = windows[i];
-            if ( metaWindow && tracker.is_window_interesting(metaWindow) ) {
-                let app = tracker.get_window_app(metaWindow);
-                if ( app ) {
-                    let item = new WindowListItem(app, metaWindow);
-                    this._windows.push(item);
-                    this.actor.add(item.actor);
+        for (let i = 0;i < this._windows[active].length;++i) {
+            this.actor.add(this._windows[active][i].actor);
+        }
+
+        this._onFocus();
+    },
+
+    _refreshWorkspace: function(index) {
+//        this.actor.destroy_children();
+
+        // Create list items for each window
+        if (this._windows[index] == undefined || this._windows[index].length == 0) {
+            this._windows[index] = [];
+
+            let windows = this._workspaces[index].list_windows();
+            let tracker = Shell.WindowTracker.get_default();
+            for ( let i = 0; i < windows.length; ++i ) {
+                let metaWindow = windows[i];
+                if ( metaWindow && tracker.is_window_interesting(metaWindow) ) {
+                    let app = tracker.get_window_app(metaWindow);
+                    if ( app ) {
+                        let item = this._windowCreate(app, metaWindow);
+                        this._windows[index].push(item);
+                    }
                 }
+
             }
         }
 
         this._onFocus();
     },
 
+
     _onMinimize: function(shellwm, actor) {
-        for ( let i=0; i<this._windows.length; ++i ) {
-            if ( this._windows[i].metaWindow == actor.get_meta_window() ) {
-                this._windows[i].doMinimize();
+        let active = global.screen.get_active_workspace_index();
+        for ( let i=0; i<this._windows[active].length; ++i ) {
+            if ( this._windows[active][i].metaWindow == actor.get_meta_window() ) {
+                this._windows[active][i].doMinimize();
                 return;
             }
         }
     },
 
     _onMap: function(shellwm, actor) {
-        for ( let i=0; i<this._windows.length; ++i ) {
-            if ( this._windows[i].metaWindow == actor.get_meta_window() ) {
-                this._windows[i].doMap();
+        let active = global.screen.get_active_workspace_index();
+        for ( let i=0; i<this._windows[active].length; ++i ) {
+            if ( this._windows[active][i].metaWindow == actor.get_meta_window() ) {
+                this._windows[active][i].doMap();
                 return;
             }
         }
     },
 
     _windowAdded: function(metaWorkspace, metaWindow) {
-        if ( metaWorkspace.index() != global.screen.get_active_workspace_index() ) {
-            return;
-        }
+        let active = global.screen.get_active_workspace_index();
+        let ws_index = metaWorkspace.index();
 
-        for ( let i=0; i<this._windows.length; ++i ) {
-            if ( this._windows[i].metaWindow == metaWindow ) {
+        for ( let i=0; i<this._windows[ws_index].length; ++i ) {
+            if ( this._windows[ws_index][i].metaWindow == metaWindow ) {
                 return;
             }
         }
@@ -188,22 +252,29 @@ WindowList.prototype = {
         let tracker = Shell.WindowTracker.get_default();
         let app = tracker.get_window_app(metaWindow);
         if ( app && tracker.is_window_interesting(metaWindow) ) {
-            let item = new WindowListItem(app, metaWindow);
-            this._windows.push(item);
-            this.actor.add(item.actor);
+            let item = this._windowCreate(app, metaWindow);
+            this._windows[ws_index].push(item);
+            if (ws_index == active) {
+                this.actor.add(item.actor);
+            }
         }
     },
 
     _windowRemoved: function(metaWorkspace, metaWindow) {
-        if ( metaWorkspace.index() != global.screen.get_active_workspace_index() ) {
+        let active = global.screen.get_active_workspace_index();
+        let ws_index = metaWorkspace.index();
+
+        if ( metaWorkspace.index() != active ) {
             return;
         }
 
-        for ( let i=0; i<this._windows.length; ++i ) {
-            if ( this._windows[i].metaWindow == metaWindow ) {
-                this.actor.remove_actor(this._windows[i].actor);
-                this._windows[i].actor.destroy();
-                this._windows.splice(i, 1);
+        for ( let i=0; i<this._windows[ws_index].length; ++i ) {
+            if ( this._windows[ws_index][i].metaWindow == metaWindow ) {
+                if (ws_index == active) {
+                    this.actor.remove_actor(this._windows[active][i].actor);
+                }
+                this._windows[ws_index][i].actor.destroy();
+                this._windows[ws_index].splice(i, 1);
                 break;
             }
         }
@@ -224,6 +295,7 @@ WindowList.prototype = {
                                     Lang.bind(this, this._windowAdded));
             ws._windowRemovedId = ws.connect('window-removed',
                                     Lang.bind(this, this._windowRemoved));
+            this._refreshWorkspace(i);
         }
     },
 
@@ -249,8 +321,82 @@ WindowList.prototype = {
         this._windows[active][idx].metaWindow.activate(global.get_current_time());
 
         return true;
+    },
+
+    _windowCreate: function(app, metaWindow) {
+        let item = new WindowListItem(app, metaWindow);
+
+        item.connect('drag-begin', Lang.bind(this, this._onDragBegin));
+        item.connect('drag-end', Lang.bind(this, this._onDragEnd));
+
+        return item;
+    },
+
+    _onDragBegin: function(time) {
+        let active = global.screen.get_active_workspace_index();
+        for (let i = 0;i < this._windows[active].length;++i) {
+            if (this._windows[active][i].inDrag == true) {
+                this._dragPos = i;
+                break;
+            }
+        }
+
+        if (this._dragPos > -1 && this._dragPos < this._windows[active].length) {
+            this._windows[active][this._dragPos].actor.hide();
+        }
+        DND.addDragMonitor(this._dragMonitor);
+    },
+
+    _onDragMotion: function(dragEvent) {
+        let source = dragEvent.source;
+
+        if (!(source instanceof WindowListItem))
+            return DND.DragMotionResult.CONTINUE;
+
+        let width = source._itemBox.get_width();
+
+        if (this._placeHolder) {
+            this.actor.remove_actor(this._placeHolder.actor);
+        } else {
+            this._placeHolder = new DragPlaceholderItem();
+            this._placeHolder.actor.set_width(width);
+        }
+
+        this._dragTargetPos = Math.round((dragEvent.x - width / 2) / width);
+
+        this.actor.insert_actor(this._placeHolder.actor, this._dragTargetPos);
+
+        return DND.DragMotionResult.MOVE_DROP;
+    },
+
+    _onDragEnd: function(time) {
+        this._dragPos = -1;
+        DND.removeDragMonitor(this._dragMonitor);
+    },
+
+    acceptDrop: function(source, actor, x, y, time) {
+        if (!(source instanceof WindowListItem))
+            return false;
+
+        let active = global.screen.get_active_workspace_index();
+        let tracker = Shell.WindowTracker.get_default();
+        let app = tracker.get_window_app(source.metaWindow);
+        let item = this._windowCreate(app, source.metaWindow);
+
+        this.actor.remove_actor(this._windows[active][this._dragPos].actor);
+        this._windows[active].splice(this._dragPos, 1);
+
+        this._windows[active].splice(this._dragTargetPos, 0, item);
+        this.actor.insert_actor(item.actor, this._dragTargetPos);
+
+        this.actor.remove_actor(this._placeHolder.actor);
+        this._placeHolder = null;
+
+        return true;
     }
+
 };
+Signals.addSignalMethods(WindowList.prototype);
 
 let nrows = 1;
 
