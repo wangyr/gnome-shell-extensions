@@ -196,22 +196,35 @@ WindowList.prototype = {
     _refreshWorkspace: function(index) {
 //        this.actor.destroy_children();
 
+        let windows = this._workspaces[index].list_windows();
+        let tracker = Shell.WindowTracker.get_default();
+
         // Create list items for each window
-        if (this._windows[index] == undefined || this._windows[index].length == 0) {
+        if (this._windows[index] == undefined)
             this._windows[index] = [];
 
-            let windows = this._workspaces[index].list_windows();
-            let tracker = Shell.WindowTracker.get_default();
-            for ( let i = 0; i < windows.length; ++i ) {
-                let metaWindow = windows[i];
-                if ( metaWindow && tracker.is_window_interesting(metaWindow) ) {
-                    let app = tracker.get_window_app(metaWindow);
-                    if ( app ) {
-                        let item = this._windowCreate(app, metaWindow);
-                        this._windows[index].push(item);
+        for (let i = 0;i < this._windows[index].length;++i) {
+            if (!(this._windows[index][i].metaWindow in windows)) {
+                this._windows[index].splice(i, 1);
+                i--;
+                break;
+            } else {
+                for (let j = 0;j < windows.length;++j) {
+                    if (this._windows[index][i].metaWindow == windows[j]) {
+                        windows.splice(j, 1);
                     }
                 }
+            }
+        }
 
+        for ( let i = 0; i < windows.length; ++i ) {
+            let metaWindow = windows[i];
+            if ( metaWindow && tracker.is_window_interesting(metaWindow) ) {
+                let app = tracker.get_window_app(metaWindow);
+                if ( app ) {
+                    let item = this._windowCreate(app, metaWindow);
+                    this._windows[index].push(item);
+                }
             }
         }
 
