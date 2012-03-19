@@ -204,16 +204,17 @@ WindowList.prototype = {
             this._windows[index] = [];
 
         for (let i = 0;i < this._windows[index].length;++i) {
-            if (!(this._windows[index][i].metaWindow in windows)) {
+            let j = windows.length;
+            for (;j >= 0;--j) {
+                if (this._windows[index][i].metaWindow == windows[j]) {
+                    windows.splice(j, 1);
+                    break;
+                }
+            }
+            if (j < 0) {
+                this.actor.remove_actor(this._windows[active][i].actor);
                 this._windows[index].splice(i, 1);
                 i--;
-                break;
-            } else {
-                for (let j = 0;j < windows.length;++j) {
-                    if (this._windows[index][i].metaWindow == windows[j]) {
-                        windows.splice(j, 1);
-                    }
-                }
             }
         }
 
