@@ -204,7 +204,7 @@ WindowList.prototype = {
             this._windows[index] = [];
 
         for (let i = 0;i < this._windows[index].length;++i) {
-            let j = windows.length;
+            let j = windows.length - 1;
             for (;j >= 0;--j) {
                 if (this._windows[index][i].metaWindow == windows[j]) {
                     windows.splice(j, 1);
@@ -213,6 +213,7 @@ WindowList.prototype = {
             }
             if (j < 0) {
                 this.actor.remove_actor(this._windows[active][i].actor);
+                this._windows[index][i].actor.destroy();
                 this._windows[index].splice(i, 1);
                 i--;
             }
