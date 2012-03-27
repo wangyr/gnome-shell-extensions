@@ -141,7 +141,8 @@ function WindowList() {
 WindowList.prototype = {
     _init: function() {
         this.actor = new St.BoxLayout({ name: 'windowList',
-                                        style_class: 'window-list-box' });
+                                        style_class: 'window-list-box',
+                                        reactive: true });
         this.actor.connect('scroll-event', Lang.bind(this, this._onScrollEvent));
         this.actor._delegate = this;
         this._windows = [];
@@ -229,8 +230,6 @@ WindowList.prototype = {
                 }
             }
         }
-
-        this._onFocus();
     },
 
 
